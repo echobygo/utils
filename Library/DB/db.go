@@ -75,8 +75,10 @@ func InitGormDB(dbConfig *MysqlConfig,ctx context.Context, encryptkey string) *G
 		copy(GormClient.dbConfig.AutoCreateTables ,dbConfig.AutoCreateTables[:])//第二个冒号 设置cap的
 	//	MiaLog.CInfo("初始化长度单位：", len(myDB.dbConfig.AutoCreateTables));
 	}
+
 	dbCon := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		dbConfig.UserName, dbConfig.Password, dbConfig.Host, dbConfig.Port,dbConfig.DBName)
+	MiaLog.CDebug(dbCon);
 	GormClient.DbConnStr = dbCon
 	var newLogger logger.Interface =nil
 	MiaLog.CInfo(dbConfig.ShowSQL)
