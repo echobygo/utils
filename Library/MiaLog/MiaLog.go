@@ -31,24 +31,24 @@ func zapLogLevel(level string) zap.AtomicLevel {
     return zap.NewAtomicLevelAt(zap.InfoLevel)
 }
 func InitLevel(level string ){
-    //cfg := zapcore.EncoderConfig{
-    //    MessageKey:  "msg",
-    //    LevelKey:    "level",
-    //    EncodeLevel: zapcore.CapitalColorLevelEncoder,
-    //    TimeKey:     "timestamp",
-    //    EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-    //        enc.AppendString(t.Format("2006-01-02 15:04:05"))
-    //    },
-    //    CallerKey:    "file",
-    //    EncodeCaller: zapcore.ShortCallerEncoder,
-    //    EncodeDuration: func(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
-    //        enc.AppendInt64(int64(d) / 1000000)
-    //    },
-    //}
+    cfg := zapcore.EncoderConfig{
+       MessageKey:  "msg",
+       LevelKey:    "level",
+       EncodeLevel: zapcore.CapitalColorLevelEncoder,
+       TimeKey:     "timestamp",
+       EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+           enc.AppendString(t.Format("2006-01-02 15:04:05"))
+       },
+       CallerKey:    "file",
+       EncodeCaller: zapcore.ShortCallerEncoder,
+       EncodeDuration: func(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
+           enc.AppendInt64(int64(d) / 1000000)
+       },
+    }
 
     // 设置一些基本日志格式 具体含义还比较好理解 直接看zap源码也不难懂
     textEncoder :=getEncoder();
-   // jsonEncoder := zapcore.NewJSONEncoder(cfg)
+   //
 
     // 实现两个判断日志等级的 interface
     //debugLevle := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
@@ -69,18 +69,19 @@ func InitLevel(level string ){
         return lvl >= zapLogLevel(level).Level()
     })
     consoleDebugging := zapcore.Lock(os.Stdout)
-    ////jsonDebugWriter := getWriter("./logs/trade-debug.log")
-    //jsonInfoWriter := getWriter("./logs/trade-info.log")
-    ////jsonWarnWriter := getWriter("./logs/trade-warn.log")
-    //jsonErrorWriter := getWriter("./logs/trade-error.log")
-    //jsonCore := zapcore.NewTee(
-    //    zapcore.NewCore(jsonEncoder, zapcore.AddSync(jsonInfoWriter), infoLevel),
-    //    zapcore.NewCore(jsonEncoder,consoleDebugging,lowPriority),
-    //    zapcore.NewCore(jsonEncoder, zapcore.AddSync(jsonErrorWriter), errorLevel),
-    //)
-    //
-    //jsonLog := zap.New(jsonCore, zap.AddCaller(),zap.AddCallerSkip(2)) // 需要传入 zap.AddCaller() 才会显示打日志点的文件名和行数, 有点小坑
-    //jsonLogger = jsonLog.Sugar()
+    //jsonDebugWriter := getWriter("./logs/trade-debug.log")
+    jsonInfoWriter := getWriter("./logs/trade-info.log")
+    //jsonWarnWriter := getWriter("./logs/trade-warn.log")
+    jsonErrorWriter := getWriter("./logs/trade-error.log")
+    jsonEncoder := zapcore.NewJSONEncoder(cfg)
+    jsonCore := zapcore.NewTee(
+       zapcore.NewCore(jsonEncoder, zapcore.AddSync(jsonInfoWriter), infoLevel),
+       zapcore.NewCore(jsonEncoder,consoleDebugging,lowPriority),
+       zapcore.NewCore(jsonEncoder, zapcore.AddSync(jsonErrorWriter), errorLevel),
+    )
+
+    jsonLog := zap.New(jsonCore, zap.AddCaller(),zap.AddCallerSkip(2)) // 需要传入 zap.AddCaller() 才会显示打日志点的文件名和行数, 有点小坑
+    jsonLogger = jsonLog.Sugar()
 
     ////获取 info、error日志文件的io.Writer 抽象 getWriter() 在下方实现
     //textDebugWriter := getWriter("./logs/trade-text-debug.log")

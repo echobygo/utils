@@ -229,6 +229,26 @@ func (s *scanResult) UnmarshalRESP(br *bufio.Reader) error {
 	return (resp2.Any{I: &s.keys}).UnmarshalRESP(br)
 }
 //查询出所有相似的key
+func (r *RadixDriver) GetPageKeys(cursor, prefix string,pageCount string) ([]string, error) {
+	var res scanResult
+	err := r.pool.Do(radix.Cmd(&res, "SCAN", cursor, "MATCH", r.Config.Prefix+prefix+"*", "COUNT", pageCount))
+	if err != nil {
+		return nil, err
+	}
+
+	keys := res.keys[0:]/**/
+	if res.cur != "0" {
+		moreKeys, err := r.GetKeys(res.cur, prefix)
+		if err != nil {
+			return nil, err
+		}
+
+		keys = append(keys, moreKeys...)
+	}
+
+	return keys, nil
+}
+//查询出所有相似的key
 func (r *RadixDriver) GetKeys(cursor, prefix string) ([]string, error) {
 	var res scanResult
 	err := r.pool.Do(radix.Cmd(&res, "SCAN", cursor, "MATCH", r.Config.Prefix+prefix+"*", "COUNT", "1000"))
