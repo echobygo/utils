@@ -424,6 +424,26 @@ func (r *RadixDriver) LoadFromRedis(key string, info interface{}) (err error) {
 	}
 	return nil
 }
+
+func (r *RadixDriver) Hmset(key string, values interface{}, ttl string) (string, error) {
+	result := r.Exists(key)
+	if !result {
+		return "",errors.New("key not existst")
+	}
+	var reply string
+	var expire int
+	err := r.pool.Do(radix.FlatCmd(&reply, "HMSET", key, values))
+	if ttl != "" {
+		err = r.pool.Do(radix.Cmd(&expire, "EXPIRE", key, ttl))
+	}
+	if err != nil {
+		fmt.Println(err)
+	}
+	return reply, err //OK,nil
+}
+
+
+
 func (r *RadixDriver) GetFieldFromRedis(key string, info interface{}, field string) (err error) {
 	result := r.Exists(key)
 	if !result {

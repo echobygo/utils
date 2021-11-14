@@ -533,6 +533,12 @@ func String2BigInt(s string)(st int64) {
 	st,_=strconv.ParseInt(s,10,64)
 	return
 }
+func Uint2String(value uint64 )string{
+	return strconv.FormatUint(value,0)
+}
+func Int2String(value int64 )string{
+	return strconv.FormatInt(value,0)
+}
 func StringMd5(str string) string {
 	hash := md5.New()
 	hash.Write([]byte(str))
