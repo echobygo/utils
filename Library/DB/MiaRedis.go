@@ -229,24 +229,25 @@ func (s *scanResult) UnmarshalRESP(br *bufio.Reader) error {
 	return (resp2.Any{I: &s.keys}).UnmarshalRESP(br)
 }
 //查询出所有相似的key
-func (r *RadixDriver) GetPageKeys(cursor, prefix string,pageCount string) ([]string, error) {
+func (r *RadixDriver) GetPageKeys(cursor, prefix string,pageCount string) ([]string, int, error) {
 	var res scanResult
 	err := r.pool.Do(radix.Cmd(&res, "SCAN", cursor, "MATCH", r.Config.Prefix+prefix+"*", "COUNT", pageCount))
 	if err != nil {
-		return nil, err
+		return nil,0, err
 	}
-
+	resultindex,_:=strconv.Atoi(res.cur);
 	keys := res.keys[0:]/**/
 	if res.cur != "0" {
-		moreKeys, err := r.GetKeys(res.cur, prefix)
+		moreKeys,resultcust, err := r.GetPageKeys(res.cur, prefix,pageCount)
 		if err != nil {
-			return nil, err
+			return nil,resultindex, err
 		}
 
 		keys = append(keys, moreKeys...)
+		resultindex= resultcust
 	}
 
-	return keys, nil
+	return keys,resultindex, nil
 }
 //查询出所有相似的key
 func (r *RadixDriver) GetKeys(cursor, prefix string) ([]string, error) {
@@ -268,7 +269,9 @@ func (r *RadixDriver) GetKeys(cursor, prefix string) ([]string, error) {
 
 	return keys, nil
 }
-
+func (r *RadixDriver)GetPool() *radix.Pool{
+	return r.pool;
+}
 // UpdateTTLMany like `UpdateTTL` but for all keys starting with that "prefix",
 // it is a bit faster operation if you need to update all sessions keys (although it can be even faster if we used hash but this will limit other features),
 // look the `sessions/Database#OnUpdateExpiration` for example.
@@ -535,6 +538,85 @@ func (r *RadixDriver) SetFieldFromRedis(key string, info interface{}, field stri
 	return errors.New("field not existst")
 }
 
+//ZAdd zadd
+func (r *RadixDriver)ZAdd(key string, score string, member string)(int ,error ){
+	intValue:=0
+	err:= r.pool.Do(radix.Cmd(&intValue, "ZADD", r.Config.Prefix+key, score, member))
+	if MiaError.CheckError(err) {
+		return  intValue,err
+	}
+	return intValue,nil
+}
+
+//ZRem zrem
+func (r *RadixDriver)ZRem(key string, member string) (int ,error ){
+	intValue:=0
+	err :=  r.pool.Do(radix.Cmd(&intValue, "ZREM", r.Config.Prefix+key, member))
+	if MiaError.CheckError(err) {
+		return  intValue,err
+	}
+	return intValue,nil
+}
+
+//ZScore zscore
+func (r *RadixDriver)ZScore(key string, member string) (int,error) {  //查询指定 成员的成绩
+	var rresult int
+	err := r.pool.Do(radix.Cmd(&rresult, "ZSCORE", r.Config.Prefix+key, member))
+	if err != nil {
+		return 0,err
+	}
+	return rresult,nil
+}
+
+//ZRank 获取指定成员所在的有序集合里面的位置
+func  (r *RadixDriver)ZRank(key string, member string) int {
+	var rt int
+	err := r.pool.Do(radix.Cmd(&rt, "ZRANK", r.Config.Prefix+key, member))
+	if err != nil {
+		return 0
+	}
+	return rt
+}
+
+//ZRevRank 返回有序集合中指定成员的排名，有序集成员按分数值递减(从大到小)排序
+func  (r *RadixDriver)ZRevRank(key string, member string) int {
+	var rt int
+	err := r.pool.Do(radix.Cmd(&rt, "ZREVRANK", r.Config.Prefix+key, member))
+	if err != nil {
+		return 0
+	}
+	return rt
+}
+
+//ZCount zcount
+func  (r *RadixDriver)ZCount(key string) int {
+	var rt int
+	err := r.pool.Do(radix.Cmd(&rt, "ZCOUNT", r.Config.Prefix+key, "-inf", "+inf"))
+	if err != nil {
+		return 0
+	}
+	return rt
+}
+
+//ZRevRange zrevrange
+func  (r *RadixDriver)ZRevRange(key string, startScore, endScore string) []string {
+	var rt []string
+	err := r.pool.Do(radix.Cmd(&rt, "zrevrange", r.Config.Prefix+key, startScore, endScore))
+	if err != nil {
+		rt = make([]string, 0)
+	}
+	return rt
+}
+
+//ZRevRangeByScore zrevrangebyscore
+func (r *RadixDriver) ZRevRangeByScore(key string, startScore, endScore, beingindex, limit string) []string {
+	var rt []string
+	err := r.pool.Do(radix.Cmd(&rt, "ZREVRANGEBYSCORE", r.Config.Prefix+key, "("+startScore, endScore, "LIMIT", beingindex, limit))
+	if err != nil {
+		rt = make([]string, 0)
+	}
+	return rt
+}
 func (self *RadixDriver) Expire(key string, second int) {
 	err := self.pool.Do(radix.Cmd(nil, "EXPIRE", key, gconv.IntString(second)))
 	MiaError.CheckError(err)

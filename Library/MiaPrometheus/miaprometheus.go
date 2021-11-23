@@ -18,7 +18,7 @@ type prom interface {
 }
 
 // NewClientPrometheus HTTP Client middleware that monitors requests made.
-func NewClientPrometheus(serviceName string, p prom)(func(iris.Context)) {
+func NewClientPrometheus(serviceName string, p prom)( func(iris.Context)) {
 	HttpServerCounterVec := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name:        httpClientReqsName,

@@ -51,7 +51,7 @@ type log interface {
 // newPrometheus returns a new prometheus middleware.
 //
 // If buckets are empty then `DefaultBuckets` are set.
-func newPrometheus() *Prometheus {
+func NewPrometheus() *Prometheus {
 	p := &Prometheus{}
 	return p
 }

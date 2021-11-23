@@ -5,9 +5,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 // 客户端
@@ -43,11 +45,11 @@ type client struct {
 
 // 配置类
 type ClientConfig struct {
-	AppID     string // app id
-	AppSecret string // app密钥
-	MchID     string // 商户号
-	ApiKey    string // 支付平台api密钥
-	IsSandBox bool   // 是否沙箱环境
+	AppID     string `yaml:"appid"` // app id
+	AppSecret string `yaml:"appsecret"`// app密钥
+	MchID     string `yaml:"mchid"`// 商户号
+	ApiKey    string `yaml:"apikey"`// 支付平台api密钥
+	IsSandBox bool   `yaml:"issandbox"`// 是否沙箱环境
 }
 
 // 创建新的客户端
@@ -90,6 +92,9 @@ func (c *client) Code2Session(code string) (*UserSession, error) {
 	err := json.Unmarshal(body, reply)
 	if err != nil {
 		return nil, err
+	}
+	if reply.Errcode!=0 {
+		return reply,errors.New("wxcode"+strconv.Itoa(reply.Errcode)+reply.Errmsg)
 	}
 	return reply, nil
 }
