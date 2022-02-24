@@ -534,10 +534,10 @@ func String2BigInt(s string)(st int64) {
 	return
 }
 func Uint2String(value uint64 )string{
-	return strconv.FormatUint(value,0)
+	return strconv.FormatUint(value,10)
 }
 func Int2String(value int64 )string{
-	return strconv.FormatInt(value,0)
+	return strconv.FormatInt(value,10)
 }
 func StringMd5(str string) string {
 	hash := md5.New()

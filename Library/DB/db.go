@@ -199,14 +199,11 @@ func (p *GormDB) initByDBConfigs() {
 
 	if dbErr != nil {
 		MiaLog.Errorf("fail to connect database: %v\n", dbErr)
-		//os.Exit(-1)
 		return
 	}
 	if sqlDb!=nil {
 		sqlDb.SetMaxIdleConns(p.dbConfig.IdleConn)
 		sqlDb.SetMaxOpenConns(p.dbConfig.MaxConn)
-		fmt.Println(p.dbConfig.MaxConn)
-		fmt.Println(p.dbConfig.IdleConn)
 		sqlDb.SetConnMaxLifetime(time.Duration(time.Second * 60))
 	}
 
@@ -243,8 +240,8 @@ LOOP:
 		select {
 		case <-timer1.C:
 			{
-				if p.IsCheckConnect ==2{
-					sqldata,_:=p.Client.DB()
+				if p.IsCheckConnect == 2 {
+					sqldata, _ := p.Client.DB()
 					err := sqldata.Ping()
 					if err != nil {
 						MiaLog.CError("mysql connect fail,err:", err)
@@ -252,19 +249,22 @@ LOOP:
 						p.IsCheckConnect = 1
 						p.reConnect()
 					}
-				}else if p.IsCheckConnect ==0 {
+				} else if p.IsCheckConnect == 0 {
 					MiaLog.CInfo("正在重连数据库")
 					p.reConnect()
 				}
 
 			}
-		case <-ctx.Done():{
-			sqldata,_:=p.Client.DB()
-			sqldata.Close()
-			break LOOP
-		}
+		case <-ctx.Done():
+			{
+				MiaLog.CInfo("准备关闭数据库链接")
+				sqldata, _ := p.Client.DB()
+				sqldata.Close()
+				break LOOP
+			}
 		}
 	}
+
 	MiaLog.CInfo("12312312312312312312")
 
 }

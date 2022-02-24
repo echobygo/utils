@@ -1,10 +1,11 @@
 package MiaCrypt
 
 import (
-
 	"bytes"
 	"crypto/cipher"
 	"crypto/aes"
+	"crypto/md5"
+	"encoding/hex"
 	"io"
 	"fmt"
 	"encoding/base64"
@@ -80,6 +81,11 @@ func StringEncrypt(text string,key string) (string, error) {
 		return pass64, err
 	}
 	return "", err
+}
+func GetMd5String(s string) string {
+	h := md5.New()
+	h.Write([]byte(s))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func StringDecrypt(text string,key string) (string, error) {

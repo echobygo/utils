@@ -41,7 +41,7 @@ func  loadFromYaml(path string ,result interface{}) error {
 	// yaml解析的时候c.data如果没有被初始化，会自动为你做初始化
 	err := yaml.Unmarshal(yamlS, result)
 	if err != nil {
-		return errors.New("can not parse "+ path + " config" )
+		return errors.New("can not parse "+ path + " config" +err.Error())
 	}
 	return nil
 }

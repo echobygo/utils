@@ -607,7 +607,15 @@ func  (r *RadixDriver)ZRevRange(key string, startScore, endScore string) []strin
 	}
 	return rt
 }
-
+//ZRevRange zrevrange
+func  (r *RadixDriver)ZRange(key string, startScore, endScore string) []string {
+	var rt []string
+	err := r.pool.Do(radix.Cmd(&rt, "ZRANGE", r.Config.Prefix+key, startScore, endScore))
+	if err != nil {
+		rt = make([]string, 0)
+	}
+	return rt
+}
 //ZRevRangeByScore zrevrangebyscore
 func (r *RadixDriver) ZRevRangeByScore(key string, startScore, endScore, beingindex, limit string) []string {
 	var rt []string

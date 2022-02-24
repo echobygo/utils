@@ -15,7 +15,7 @@ import (
 // 客户端
 type Client interface {
 	Err() error
-	Client() client                                                                           // 获取客户端实例的拷贝
+	Client() WxClient                                                                           // 获取客户端实例的拷贝
 	Code2Session(code string) (*UserSession, error)                                                 // 获取openid
 	Oauth2(code string) (openid, at string)                                                   // 网页登录
 	UnifiedOrder(p *Params) (prepayId string)                                                 // 统一下单
@@ -34,7 +34,7 @@ type Client interface {
 	GetSandboxSignKey(p *Params) (signKey string)                                             // 获取沙箱环境签名key
 }
 
-type client struct {
+type WxClient struct {
 	AppID     string // app id
 	AppSecret string // app密钥
 	MchID     string // 商户号
@@ -53,8 +53,8 @@ type ClientConfig struct {
 }
 
 // 创建新的客户端
-func NewClient(cfg *ClientConfig) Client {
-	return &client{
+func NewClient(cfg *ClientConfig) *WxClient {
+	return &WxClient{
 		AppID:     cfg.AppID,
 		AppSecret: cfg.AppSecret,
 		MchID:     cfg.MchID,
@@ -62,23 +62,40 @@ func NewClient(cfg *ClientConfig) Client {
 		IsSandBox: cfg.IsSandBox,
 	}
 }
+type WxUserinfo struct {
+	OpenId    string `json:"openId"`
+	NickName  string `json:"nickName"`
+	Gender    int    `json:"gender"`
+	Language  string `json:"language"`
+	City      string `json:"city"`
+	Province  string `json:"province"`
+	Country   string `json:"country"`
+	AvatarUrl string `json:"avatarUrl"`
+	UnionId   string `json:"unionId"`
+	Watermark WxUserinfoMark
+}
+type WxUserinfoMark struct {
+	Timestamp int64  `json:"timestamp"`
+	Appid     string `json:"appid"`
+}
 
-func (c client) Err() error {
+func (c WxClient) Err() error {
 	return c.err
 }
 
-func (c client) Client() client {
+func (c WxClient) Client() WxClient {
 	return c
 }
 
 
 // 登录api
-func (c *client) Code2Session(code string) (*UserSession, error) {
+func (c *WxClient) Code2Session(code string) (*UserSession, error) {
 	var (
 		res  *http.Response
 		body []byte
 	)
-	res, c.err = http.Get(fmt.Sprintf(Code2SessionUrl, c.AppID, c.AppSecret, code))
+	strurl:=fmt.Sprintf(Code2SessionUrl, c.AppID, c.AppSecret, code);
+	res, c.err = http.Get(strurl)
 	if c.err != nil {
 		return nil,c.err
 	}
@@ -87,6 +104,7 @@ func (c *client) Code2Session(code string) (*UserSession, error) {
 	if c.err != nil {
 		return nil,c.err
 	}
+	fmt.Println(string(body))
 
 	reply := &UserSession{}
 	err := json.Unmarshal(body, reply)
@@ -100,7 +118,7 @@ func (c *client) Code2Session(code string) (*UserSession, error) {
 }
 
 // web登录api
-func (c *client) Oauth2(code string) (openid, at string) {
+func (c *WxClient) Oauth2(code string) (openid, at string) {
 	var (
 		res  *http.Response
 		body []byte
@@ -135,7 +153,7 @@ func (c *client) Oauth2(code string) (openid, at string) {
 }
 
 // 统一下单api
-func (c *client) UnifiedOrder(p *Params) (prepayId string) {
+func (c *WxClient) UnifiedOrder(p *Params) (prepayId string) {
 	var (
 		ok         bool
 		err        error
@@ -233,7 +251,7 @@ func (c *client) UnifiedOrder(p *Params) (prepayId string) {
 }
 
 // 获取沙箱key
-func (c client) GetSandboxSignKey(p *Params) (signKey string) {
+func (c WxClient) GetSandboxSignKey(p *Params) (signKey string) {
 	var (
 		ok         bool
 		err        error
@@ -295,7 +313,7 @@ func (c client) GetSandboxSignKey(p *Params) (signKey string) {
 }
 
 // 退款
-func (c *client) Refund(p *Params, keyPath, certPath string) {
+func (c *WxClient) Refund(p *Params, keyPath, certPath string) {
 	var (
 		ok         bool
 		err        error
@@ -409,7 +427,7 @@ func (c *client) Refund(p *Params, keyPath, certPath string) {
 }
 
 // 关闭订单
-func (c *client) CloseOrder(p *Params) {
+func (c *WxClient) CloseOrder(p *Params) {
 	var (
 		ok         bool
 		err        error
@@ -508,7 +526,7 @@ func (c *client) CloseOrder(p *Params) {
 }
 
 // 获取接口调用凭证
-func (c *client) GetAccessToken() (accessToken string) {
+func (c *WxClient) GetAccessToken() (accessToken string) {
 	var (
 		ok   bool
 		err  error
@@ -552,7 +570,7 @@ func (c *client) GetAccessToken() (accessToken string) {
 }
 
 // 获取日访问留存
-func (c *client) GetDailyRetain(accessToken, date string) (result map[string]interface{}) {
+func (c *WxClient) GetDailyRetain(accessToken, date string) (result map[string]interface{}) {
 	var (
 		err     error
 		reqBody []byte
@@ -602,7 +620,7 @@ func (c *client) GetDailyRetain(accessToken, date string) (result map[string]int
 }
 
 // 获取月访问留存
-func (c *client) GetMonthlyRetain(accessToken string, year int, month int) (result map[string]interface{}) {
+func (c *WxClient) GetMonthlyRetain(accessToken string, year int, month int) (result map[string]interface{}) {
 	var (
 		err     error
 		begin   string
@@ -656,7 +674,7 @@ func (c *client) GetMonthlyRetain(accessToken string, year int, month int) (resu
 }
 
 // 获取周访问留存
-func (c *client) GetWeeklyRetain(accessToken string) (result map[string]interface{}) {
+func (c *WxClient) GetWeeklyRetain(accessToken string) (result map[string]interface{}) {
 	var (
 		err     error
 		begin   string
@@ -710,7 +728,7 @@ func (c *client) GetWeeklyRetain(accessToken string) (result map[string]interfac
 }
 
 // 获取日统计
-func (c *client) GetDailySummary(accessToken, date string) (result map[string]interface{}) {
+func (c *WxClient) GetDailySummary(accessToken, date string) (result map[string]interface{}) {
 	var (
 		err     error
 		reqBody []byte
@@ -760,7 +778,7 @@ func (c *client) GetDailySummary(accessToken, date string) (result map[string]in
 }
 
 // 获取日趋势
-func (c *client) GetDailyVisitTrend(accessToken, date string) (result map[string]interface{}) {
+func (c *WxClient) GetDailyVisitTrend(accessToken, date string) (result map[string]interface{}) {
 	var (
 		err     error
 		reqBody []byte
@@ -810,7 +828,7 @@ func (c *client) GetDailyVisitTrend(accessToken, date string) (result map[string
 }
 
 // 获取周趋势
-func (c *client) GetWeeklyVisitTrend(accessToken string) (result map[string]interface{}) {
+func (c *WxClient) GetWeeklyVisitTrend(accessToken string) (result map[string]interface{}) {
 	var (
 		err     error
 		begin   string
@@ -864,7 +882,7 @@ func (c *client) GetWeeklyVisitTrend(accessToken string) (result map[string]inte
 }
 
 // 获取月趋势
-func (c *client) GetMonthlyVisitTrend(accessToken string, year, month int) (result map[string]interface{}) {
+func (c *WxClient) GetMonthlyVisitTrend(accessToken string, year, month int) (result map[string]interface{}) {
 	var (
 		err     error
 		begin   string
@@ -917,7 +935,7 @@ func (c *client) GetMonthlyVisitTrend(accessToken string, year, month int) (resu
 }
 
 // 获取用户画像
-func (c *client) GetDailyUserPortrait(accessToken, date string) (result map[string]interface{}) {
+func (c *WxClient) GetDailyUserPortrait(accessToken, date string) (result map[string]interface{}) {
 	var (
 		err     error
 		reqBody []byte
@@ -968,7 +986,7 @@ func (c *client) GetDailyUserPortrait(accessToken, date string) (result map[stri
 }
 
 // 获取用户分布
-func (c *client) GetDailyVisitDistribution(accessToken, date string) (result map[string]interface{}) {
+func (c *WxClient) GetDailyVisitDistribution(accessToken, date string) (result map[string]interface{}) {
 	var (
 		err     error
 		reqBody []byte
@@ -1018,7 +1036,7 @@ func (c *client) GetDailyVisitDistribution(accessToken, date string) (result map
 }
 
 // 获取页面数据
-func (c *client) GetDailyVisitPage(accessToken, date string) (result map[string]interface{}) {
+func (c *WxClient) GetDailyVisitPage(accessToken, date string) (result map[string]interface{}) {
 	var (
 		err     error
 		reqBody []byte
@@ -1067,6 +1085,6 @@ func (c *client) GetDailyVisitPage(accessToken, date string) (result map[string]
 	return
 }
 
-func (c *client) signParamMD5(p *Params, key string) {
+func (c *WxClient) signParamMD5(p *Params, key string) {
 	p.value["sign"] = GeneSign(p.value, key)
 }

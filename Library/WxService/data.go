@@ -3,6 +3,11 @@ package WxService
 import (
 	"encoding/xml"
 	"io"
+	"crypto/sha1"
+	"encoding/hex"
+	"encoding/base64"
+	"crypto/aes"
+	"crypto/cipher"
 )
 
 const (
@@ -81,4 +86,39 @@ func (x *Xml) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	}
 
 	return nil
+}
+func Sha1s(s string) string {
+	r := sha1.Sum([]byte(s))
+	return hex.EncodeToString(r[:])
+}
+func AesCBCDncrypt(encryptData, key, iv []byte) ([]byte, error) {
+	var aesBlockDecrypter cipher.Block
+	aesBlockDecrypter, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	decrypted := make([]byte, len(encryptData))
+	aesDecrypter := cipher.NewCBCDecrypter(aesBlockDecrypter, iv)
+	aesDecrypter.CryptBlocks(decrypted, encryptData)
+
+	return decrypted, nil
+}
+func DecryptData(encryptedData, key, iv string) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(encryptedData)
+	if err != nil {
+		return nil, err
+	}
+	iKey, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		return nil, err
+	}
+	iIv, err := base64.StdEncoding.DecodeString(iv)
+	if err != nil {
+		return nil, err
+	}
+	dnData, err := AesCBCDncrypt(data, iKey, iIv)
+	if err != nil {
+		return nil, err
+	}
+	return dnData, nil
 }
