@@ -3,7 +3,6 @@ package FileUtils
 import (
 	"bufio"
 	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +13,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"runtime"
+	"log"
+	"path"
 )
 
 // GetCurrentAbPathByExecutable 当前执行文件目录
