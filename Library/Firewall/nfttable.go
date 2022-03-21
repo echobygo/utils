@@ -1,5 +1,5 @@
 /**
- * @Author: linminglu
+ * @Author: 
  * @Description:
  * @File:  nfttable
  * @Version: 1.0.0

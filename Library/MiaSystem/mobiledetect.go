@@ -1,10 +1,9 @@
 package MiaSystem
 import (
-	mobiledetect "github.com/Shaked/gomobiledetect"
-	"net/http"
+		"net/http"
 )
 func IsMobile(r *http.Request) bool {
-	detect := mobiledetect.NewMobileDetect(r, nil)
+	detect := NewMobileDetect(r, nil)
 	if detect.IsMobile() || detect.IsTablet(){
 		if detect.IsMobile() && detect.IsTablet(){
 	//		fmt.Println("Hello, this is Tablet")

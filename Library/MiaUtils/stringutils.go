@@ -525,7 +525,10 @@ func Struct2JsonStr(str interface{}) string {
 	if str==nil {
 		return ""
 	}
-	result,_:=json.Marshal(str)
+	result,err:=json.Marshal(str)
+	if err!=nil {
+		fmt.Println(err.Error())
+	}
 	return string(result)
 
 }
