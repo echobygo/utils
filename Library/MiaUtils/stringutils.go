@@ -542,6 +542,10 @@ func Uint2String(value uint64 )string{
 func Int2String(value int64 )string{
 	return strconv.FormatInt(value,10)
 }
+func String2Int(s string)(st int) {
+	st,_=strconv.Atoi(s)
+	return
+}
 func StringMd5(str string) string {
 	hash := md5.New()
 	hash.Write([]byte(str))

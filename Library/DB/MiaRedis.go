@@ -389,7 +389,7 @@ func (r *RadixDriver) SaveToRedis(key string, info interface{}) {
 func (r *RadixDriver) LoadFromRedis(key string, info interface{}) (err error) {
 	result := r.Exists(key)
 	if !result {
-		return errors.New("key not existst")
+		return errors.New("key not existst:"+key)
 	}
 	dataStruct := reflect.Indirect(reflect.ValueOf(info))
 	dataStructType := dataStruct.Type()
