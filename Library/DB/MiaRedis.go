@@ -228,6 +228,23 @@ func (s *scanResult) UnmarshalRESP(br *bufio.Reader) error {
 
 	return (resp2.Any{I: &s.keys}).UnmarshalRESP(br)
 }
+func(r *RadixDriver)SelectDb(idx string) (error) {
+	p:=radix.Cmd(nil, "SELECT", idx)
+	return  r.pool.Do(p)
+}
+func (r *RadixDriver)GetMembersArray(idx string,key string) ([]string,error) {
+	sids := []string{}
+	p := radix.Pipeline(
+		radix.Cmd(nil, "SELECT", idx),
+		radix.Cmd(&sids, "SMEMBERS", key),
+		radix.Cmd(nil, "SELECT", r.Config.Database),
+	)
+	if err := r.pool.Do(p); err != nil {
+		return nil, err
+	}else{
+		return sids,err	
+	}
+}
 //查询出所有相似的key
 func (r *RadixDriver) GetPageKeys(cursor, prefix string,pageCount string) ([]string, int, error) {
 	var res scanResult
